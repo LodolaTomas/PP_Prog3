@@ -2,7 +2,8 @@
 require "./clases/Ciudadano.php";
 $array = Ciudadano::traerTodos();
 $json="";
+$listajson=[];
 foreach ($array as $value) {
-    $json .= $value->toJSON()."<br>";
+    array_push($listajson,json_decode($value->toJSON()));
 }
-echo $json;
+var_dump($listajson);

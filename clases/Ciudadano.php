@@ -38,38 +38,52 @@ class Ciudadano
 
     function GuardarEnArchivo()
     {
-        $nombreArchivo = "./archivos/cuidadano.json";
-        $retorno = new stdClass();
-        $retorno->exito = false;
-        $retorno->mensaje = "Guardado Cuidadano Fallo";
-        $archivo = fopen($nombreArchivo, "a+");
-        if ($archivo) {
-            fwrite($archivo, $this->ToJSON() . "\r\n");
-            $retorno->exito = true;
-            $retorno->mensaje = "Guardado Cuidadano Agregado";
-            fclose($archivo);
+        $arrayJson = array();
+        $path = "./archivos/ciudadano.json";
+        $obj= new stdClass();
+        $obj->exito=false;
+        $obj->mensaje="No se pudo Agregar el Ciudadano";
+        if (file_exists("./archivos/ciudadano.json")) {// verifico si el archivo ya fue creado o no
+            $arc = fopen($path, "r+");
+            $leo = fread($arc, filesize($path));//si fue creado lo leo
+            fclose($arc);
+            $arrayJson = json_decode($leo);//guardo lo leio en un arrayJson
+            array_push($arrayJson, json_decode($this->ToJSON()));//guardo en ese array mi nuevo Ciudadano 
+            $arc = fopen($path, "w+");//abro el archivo nuevamente y sobreescribo
+            $cant = fwrite($arc, json_encode($arrayJson));//termino guardando el nuevo Ciudadano agegado al .json
+            if ($cant > 0) {
+                $obj->exito=true;
+                $obj->mensaje="Ciudadano Agregado Correctamente";
+            }
+            fclose($arc);
+        } else {// si el archivo no existe lo creo 
+            $arc = fopen("./archivos/ciudadano.json", "w+");
+            array_push($arrayJson, json_decode($this->ToJSON()));
+            $cant = fwrite($arc, json_encode($arrayJson));//guardo en el archivo nuevo mi arrayjson
+            if ($cant > 0) {
+                $obj->exito=true;
+                $obj->mensaje="Ciudadano Agregado Correctamente";
+            }
+            fclose($arc);
         }
-        return $retorno;
+        return $obj;
     }
 
     static function TraerTodos()
     {
-        $nombreArchivo = "./archivos/cuidadano.json";
+        $traigoTodos=array();
+        $nombreArchivo = "./archivos/ciudadano.json";
         $archivo = fopen($nombreArchivo, "r");
-        rewind($archivo);
-        $ciudadano = array();
-        if ($archivo) {
-            while (!feof($archivo)) {
-                $cadena = trim(fgets($archivo));
-                $datos = json_decode($cadena, true);
-                if ($datos != false) {
-                    $newCiudadano = new Ciudadano($datos->ciudad, $datos->clave, $datos->email);
-                    array_push($ciudadano, $newCiudadano);
-                }
-            }
-            fclose($archivo);
+        $archAux = fread($archivo,filesize($nombreArchivo));
+        $traigoTodos=json_decode($archAux,true,512,JSON_OBJECT_AS_ARRAY);//traigo los arrays de json
+        fclose($archivo);
+        $cantidad= count($traigoTodos);
+        $arrayCiudadano=[];
+        for ($i=0; $i < $cantidad; $i++) { 
+            $ciudadano= new Ciudadano($traigoTodos[$i]["ciudad"],$traigoTodos[$i]["email"],$traigoTodos[$i]["clave"]);
+            array_push($arrayCiudadano,$ciudadano);
         }
-        return $ciudadano;
+        return $arrayCiudadano;
     }
 
     public static function verificarExistencia($ciudadano)
@@ -104,8 +118,6 @@ class Ciudadano
     {
         $ciudadanos = Ciudadano::TraerTodos();
         foreach ($ciudadanos as $key) {
-                        
         }
-
     }
 }
